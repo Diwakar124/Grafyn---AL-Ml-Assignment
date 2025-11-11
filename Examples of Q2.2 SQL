@@ -1,0 +1,40 @@
+Q2.2
+• Provide an example of SQL queries that extract and preprocess data in Snowflake.  
+
+
+USE DATABASE FEATURE_STORE_DB;
+USE SCHEMA FEATURES
+
+--  Extract sample data from a Snowflake sample dataset
+SELECT 
+    C_CUSTKEY AS CUSTOMER_ID,
+    C_NAME AS CUSTOMER_NAME,
+    C_NATIONKEY AS NATION_ID,
+    C_ACCTBAL AS ACCOUNT_BALANCE
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.CUSTOMER
+LIMIT 10;
+
+
+--  Preprocess data - Handle missing or invalid values
+-- Replace NULL balances with 0
+CREATE OR REPLACE TABLE CLEANED_CUSTOMER_DATA AS
+SELECT 
+    C_CUSTKEY AS CUSTOMER_ID,
+    C_NAME AS CUSTOMER_NAME,
+    C_NATIONKEY AS NATION_ID,
+    COALESCE(C_ACCTBAL, 0) AS ACCOUNT_BALANCE
+FROM SNOWFLAKE_SAMPLE_DATA.TPCH_SF100.CUSTOMER;
+
+--   Feature engineering - Create aggregated features
+-- -- Example: Average and total account balance per nation
+CREATE OR REPLACE TABLE CUSTOMER_FEATURES AS
+SELECT 
+    NATION_ID,
+    AVG(ACCOUNT_BALANCE) AS AVG_ACCOUNT_BALANCE,
+    SUM(ACCOUNT_BALANCE) AS TOTAL_ACCOUNT_BALANCE,
+    COUNT(CUSTOMER_ID) AS TOTAL_CUSTOMERS
+FROM CLEANED_CUSTOMER_DATA
+GROUP BY NATION_ID;
+
+-- Step 5: Verify the processed features
+SELECT * FROM CUSTOMER_FEATURES LIMIT 10;
